@@ -1,0 +1,19 @@
+FROM mcr.microsoft.com/dotnet/core/aspnet:3.0-buster-slim AS base
+WORKDIR /app
+EXPOSE 80
+
+FROM mcr.microsoft.com/dotnet/core/sdk:3.0-buster AS build
+WORKDIR /src
+COPY ["src/MicroQuiz.Services.Auth.Api/MicroQuiz.Services.Auth.Api.csproj", "src/MicroQuiz.Services.Auth.Api/"]
+RUN dotnet restore "src/MicroQuiz.Services.Auth.Api/MicroQuiz.Services.Auth.Api.csproj"
+COPY . .
+WORKDIR "/src/src/MicroQuiz.Services.Auth.Api"
+RUN dotnet build "MicroQuiz.Services.Auth.Api.csproj" -c Release -o /app/build
+
+FROM build AS publish
+RUN dotnet publish "MicroQuiz.Services.Auth.Api.csproj" -c Release -o /app/publish
+
+FROM base AS final
+WORKDIR /app
+COPY --from=publish /app/publish .
+ENTRYPOINT ["dotnet", "MicroQuiz.Services.Auth.Api.dll"]
